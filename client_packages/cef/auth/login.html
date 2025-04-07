@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autentificare - RAGE.RO-SAMP</title>
+    <link rel="stylesheet" href="login.css">
+    
+</head>
+<body>
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+            <button class="tab-btn" onclick="switchTab('register')">Register</button>
+        </div>
+
+        <div class="card">
+            <div id="login-form" class="tab active">
+                <h1>Login</h1>
+                <input type="text" id="loginName" placeholder="Username">
+                <input type="password" id="loginPass" placeholder="Password">
+                <button onclick="sendAccountInfo(0)">Login</button>
+                <p id="loginError" class="error-msg"></p>
+            </div>
+
+            <div id="register-form" class="tab">
+                <h1>Register</h1>
+                <input type="text" id="registerName" placeholder="Username">
+                <input type="email" id="registerEmail" placeholder="Email">
+                <input type="password" id="registerPass" placeholder="Password">
+                <input type="password" id="registerPass2" placeholder="Repeat Password">
+                <button onclick="sendAccountInfo(1)">Register</button>
+                <p id="registerError" class="error-msg"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log("login.js a fost inclus");
+      </script>
+      <script src="login.js"></script>
+      
+</body>
+</html>
