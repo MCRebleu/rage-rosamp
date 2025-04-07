@@ -1,79 +1,65 @@
-console.log("🚨 login.js EXECUTAT");
-console.log("🎉 Login JS încărcat!");
+// client_packages/login.js
 
+let loginBrowser = null;
 
-// Schimbare taburi
-function switchTab(tab, event = null) {
-    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+mp.events.add("client:showLoginUI", () => {
+    if (loginBrowser !== null) return;
 
-    document.getElementById(`${tab}-form`).classList.add('active');
+    loginBrowser = mp.browsers.new("package://cef/auth/login.html");
 
-    if (event) {
-        event.target.classList.add('active');
+    mp.gui.cursor.show(true, true);
+    mp.gui.chat.activate(false);
+
+    mp.console.logInfo("🧠 Login UI deschis");
+});
+
+mp.events.add("client:closeLoginUI", () => {
+    if (loginBrowser) {
+        loginBrowser.destroy();
+        loginBrowser = null;
     }
-}
 
+    mp.gui.cursor.show(false, false);
+    mp.gui.chat.activate(true);
 
-// Trimitere date spre client-side RageMP
-function sendAccountInfo(state) {
-    if (state === 0) {
-        const user = document.getElementById('loginName').value.trim();
-        const pass = document.getElementById('loginPass').value.trim();
-        const error = document.getElementById('loginError');
+    mp.console.logInfo("👋 Login UI închis");
+});
 
-        error.innerText = '';
+// Răspunsuri primite de la server pentru login/register
+mp.events.add("client:loginHandler", (status) => {
+    if (!loginBrowser) return;
 
-        if (user.length < 3 || pass.length < 3) {
-            error.innerText = 'Username sau parola prea scurtă';
-            return;
-        }
+    loginBrowser.execute(`handleAuthResponse('${status}')`);
 
-        // Trimite datele printr-un mesaj către client-side RageMP
-        window.postMessage({
-            type: "loginData",
-            data: { user, pass }
-        });
-    } else {
-        const user = document.getElementById('registerName').value.trim();
-        const email = document.getElementById('registerEmail').value.trim();
-        const pass = document.getElementById('registerPass').value.trim();
-        const pass2 = document.getElementById('registerPass2').value.trim();
-        const error = document.getElementById('registerError');
-
-        error.innerText = '';
-
-        if (user.length < 3 || pass.length < 5 || !email.includes('@')) {
-            error.innerText = 'Date incorecte sau incomplete';
-            return;
-        }
-
-        if (pass !== pass2) {
-            error.innerText = 'Parolele nu se potrivesc';
-            return;
-        }
-
-        // Trimite datele printr-un mesaj către client-side RageMP
-        window.postMessage({
-            type: "registerData",
-            data: { user, email, pass }
-        });
+    if (status === "success") {
+        setTimeout(() => {
+            mp.events.call("client:closeLoginUI");
+        }, 1000); // efect de fadeOut
     }
-}
+});
 
-// Funcție apelată din client la succes login (cu delay)
-function fadeOutLogin() {
-    const card = document.querySelector('.container');
-    const whoosh = document.getElementById('whoosh');
-    if (whoosh) whoosh.play();
+// Preluare date din UI (din CEF, prin window.postMessage)
+window.addEventListener("message", (event) => {
+    const data = event.data;
+    if (!data || !data.type || !data.data) return;
 
-    card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-    card.style.opacity = '0';
-    card.style.transform = 'scale(0.9)';
+    const { user, pass, email } = data.data;
 
-    setTimeout(() => {
-        document.body.style.display = 'none';
-    }, 700);
-}
+    switch (data.type) {
+        case "loginData":
+            if (user && pass) {
+                mp.trigger("server:loginAccount", user, pass);
+            }
+            break;
 
-console.log("🔧 Login UI Loaded cu succes!");
+        case "registerData":
+            if (user && email && pass) {
+                mp.trigger("server:registerAccount", user, email, pass);
+            }
+            break;
+
+        default:
+            mp.console.logInfo("📨 Tip necunoscut primit din UI: " + data.type);
+            break;
+    }
+});
